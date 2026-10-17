@@ -31,11 +31,11 @@ const projects = [
 
 const upcomingProject = {
     id: 3,
-    title: 'Inheritance',
-    year: 2025,
-    format: 'Feature Documentary',
+    title: 'Production No. 3',
+    year: 2026,
+    format: 'Feature Film',
     slug: 'project-upcoming',
-    description: 'A documentary exploring the cultural heritage and traditions of Kerala filmmaking through the eyes of three generations.',
+    description: 'Written and directed by Vishnu John and Akhil Niranjan. Currently in production.',
     poster: 'assets/img/upcoming.webp',
     posterFallback: 'assets/img/upcoming.jpg'
 };
