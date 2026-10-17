@@ -1,11 +1,9 @@
-// Configuration (Replace with your actual values)
 const CONFIG = {
-    formEndpoint: '', // Leave empty for mailto fallback, or set to Formspree: https://formspree.io/f/YOUR_ID
+    formEndpoint: '',
     instagramHandle: 'trivandrumlobbyproductions',
     whatsappNumber: '+91 98765 43210'
 };
 
-// Project data (Sample/Demo content - replace with real data)
 const projects = [
     {
         id: 1,
@@ -40,35 +38,13 @@ const upcomingProject = {
     posterFallback: 'assets/img/upcoming.jpg'
 };
 
-// Team data (Sample/Demo content - replace with real team)
 const teamMembers = [
-    {
-        name: 'Arjun Nair',
-        role: 'Director',
-        image: 'assets/img/team-1.webp',
-        imageFallback: 'assets/img/team-1.jpg'
-    },
-    {
-        name: 'Priya Menon',
-        role: 'Producer',
-        image: 'assets/img/team-2.webp',
-        imageFallback: 'assets/img/team-2.jpg'
-    },
-    {
-        name: 'Rohan Kumar',
-        role: 'Cinematographer',
-        image: 'assets/img/team-3.webp',
-        imageFallback: 'assets/img/team-3.jpg'
-    },
-    {
-        name: 'Anjali Singh',
-        role: 'Editor',
-        image: 'assets/img/team-4.webp',
-        imageFallback: 'assets/img/team-4.jpg'
-    }
+    { name: 'Arjun Nair', role: 'Director', image: 'assets/img/team-1.webp', imageFallback: 'assets/img/team-1.jpg' },
+    { name: 'Priya Menon', role: 'Producer', image: 'assets/img/team-2.webp', imageFallback: 'assets/img/team-2.jpg' },
+    { name: 'Rohan Kumar', role: 'Cinematographer', image: 'assets/img/team-3.webp', imageFallback: 'assets/img/team-3.jpg' },
+    { name: 'Anjali Singh', role: 'Editor', image: 'assets/img/team-4.webp', imageFallback: 'assets/img/team-4.jpg' }
 ];
 
-// Instagram feed data (6 images) - Sample/Demo
 const instagramFeed = [
     { url: 'https://instagram.com/p/sample1/', image: 'assets/instagram/img-1.webp', fallback: 'assets/instagram/img-1.jpg' },
     { url: 'https://instagram.com/p/sample2/', image: 'assets/instagram/img-2.webp', fallback: 'assets/instagram/img-2.jpg' },
@@ -78,7 +54,9 @@ const instagramFeed = [
     { url: 'https://instagram.com/p/sample6/', image: 'assets/instagram/img-6.webp', fallback: 'assets/instagram/img-6.jpg' }
 ];
 
-// Initialize on DOM ready
+let lastScrollY = 0;
+let scrollTimeout = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     renderProjects();
     renderTeam();
@@ -86,13 +64,13 @@ document.addEventListener('DOMContentLoaded', function() {
     setupNavigation();
     setupContactForm();
     updateConfigLinks();
+    setupScrollEffects();
+    setupBackToTop();
 });
 
-// Render project cards
 function renderProjects() {
     const grid = document.getElementById('projects-completed');
     if (!grid) return;
-
     grid.innerHTML = projects.map(project => `
         <div class="project-card">
             <div class="project-poster">
@@ -111,11 +89,9 @@ function renderProjects() {
     `).join('');
 }
 
-// Render team cards
 function renderTeam() {
     const grid = document.getElementById('team-grid');
     if (!grid) return;
-
     grid.innerHTML = teamMembers.map(member => `
         <div class="team-card">
             <div class="team-photo">
@@ -130,11 +106,9 @@ function renderTeam() {
     `).join('');
 }
 
-// Render Instagram feed
 function renderInstagram() {
     const grid = document.getElementById('instagram-grid');
     if (!grid) return;
-
     grid.innerHTML = instagramFeed.map((post, index) => `
         <a href="${post.url}" target="_blank" rel="noopener noreferrer" class="instagram-item">
             <picture>
@@ -148,37 +122,104 @@ function renderInstagram() {
     `).join('');
 }
 
-// Mobile navigation toggle
 function setupNavigation() {
     const toggle = document.querySelector('.navbar-toggle');
     const menu = document.getElementById('navbar-menu');
-
     if (!toggle) return;
 
     toggle.addEventListener('click', function() {
         const expanded = toggle.getAttribute('aria-expanded') === 'true';
         toggle.setAttribute('aria-expanded', !expanded);
         menu.classList.toggle('active');
+        document.body.style.overflow = expanded ? 'auto' : 'hidden';
     });
 
-    // Close menu when a link is clicked
     menu.querySelectorAll('a').forEach(link => {
         link.addEventListener('click', function() {
             toggle.setAttribute('aria-expanded', 'false');
             menu.classList.remove('active');
+            document.body.style.overflow = 'auto';
         });
     });
 
-    // Close menu when clicking outside
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.navbar')) {
             toggle.setAttribute('aria-expanded', 'false');
             menu.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            toggle.setAttribute('aria-expanded', 'false');
+            menu.classList.remove('active');
+            document.body.style.overflow = 'auto';
         }
     });
 }
 
-// Contact form handling
+function setupScrollEffects() {
+    const navbar = document.querySelector('.navbar');
+    if (!navbar) return;
+
+    function updateScrollProgress() {
+        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrolled = (window.scrollY / scrollHeight) * 100;
+        const progress = document.querySelector('.scroll-progress');
+        if (progress) progress.style.width = scrolled + '%';
+    }
+
+    function updateNavbar() {
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+
+        clearTimeout(scrollTimeout);
+        if (window.scrollY > 100) {
+            if (window.scrollY < lastScrollY) {
+                navbar.classList.remove('hidden');
+            } else {
+                navbar.classList.add('hidden');
+            }
+        }
+
+        scrollTimeout = setTimeout(() => {
+            lastScrollY = window.scrollY;
+        }, 100);
+    }
+
+    window.addEventListener('scroll', function() {
+        updateScrollProgress();
+        updateNavbar();
+    }, { passive: true });
+}
+
+function setupBackToTop() {
+    const btn = document.querySelector('.back-to-top');
+    if (!btn) {
+        const newBtn = document.createElement('button');
+        newBtn.className = 'back-to-top';
+        newBtn.setAttribute('aria-label', 'Back to top');
+        newBtn.innerHTML = '↑';
+        document.body.appendChild(newBtn);
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > window.innerHeight) {
+                newBtn.classList.add('visible');
+            } else {
+                newBtn.classList.remove('visible');
+            }
+        }, { passive: true });
+
+        newBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+}
+
 function setupContactForm() {
     const form = document.getElementById('contact-form');
     if (!form) return;
@@ -186,75 +227,55 @@ function setupContactForm() {
     form.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // Check honeypot
         const honeypot = form.querySelector('input[name="website"]').value;
-        if (honeypot) {
-            console.log('Honeypot triggered');
-            return;
-        }
+        if (honeypot) return;
 
-        // If no endpoint is set, use mailto
         if (!CONFIG.formEndpoint || CONFIG.formEndpoint === '[FORM_ENDPOINT]') {
             const name = form.querySelector('#name').value;
             const organization = form.querySelector('#organization').value;
             const enquiryType = form.querySelector('#enquiry-type').value;
             const message = form.querySelector('#message').value;
-
             const emailBody = `Name: ${name}\nOrganization: ${organization}\nEnquiry Type: ${enquiryType}\n\nMessage:\n${message}`;
-            window.location.href = `mailto:hello@trivandrumlob by.com?subject=Enquiry from ${name}&body=${encodeURIComponent(emailBody)}`;
+            window.location.href = `mailto:hello@trivandrumlobby.com?subject=Enquiry from ${name}&body=${encodeURIComponent(emailBody)}`;
             return;
         }
 
-        // Send to form endpoint
         const formData = new FormData(form);
-
         fetch(CONFIG.formEndpoint, {
             method: 'POST',
             body: formData,
-            headers: {
-                'Accept': 'application/json'
-            }
+            headers: { 'Accept': 'application/json' }
         })
         .then(response => {
             if (response.ok) {
                 showFormMessage('Message sent successfully. We will get back to you soon.', 'success');
                 form.reset();
             } else {
-                showFormMessage('There was an error sending your message. Please try again.', 'error');
+                showFormMessage('Error sending message. Please try again.', 'error');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            showFormMessage('There was an error sending your message. Please try again.', 'error');
+            showFormMessage('Error sending message. Please try again.', 'error');
         });
     });
 }
 
-// Show form message
 function showFormMessage(message, type) {
     const messageDiv = document.getElementById('form-message');
     if (!messageDiv) return;
-
     messageDiv.textContent = message;
     messageDiv.className = `form-message ${type}`;
     messageDiv.style.display = 'block';
-
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-        messageDiv.style.display = 'none';
-    }, 5000);
+    setTimeout(() => { messageDiv.style.display = 'none'; }, 5000);
 }
 
-// Update config links (Instagram, WhatsApp)
 function updateConfigLinks() {
-    // Instagram handle
     document.querySelectorAll('a[href*="instagram.com/[INSTAGRAM_HANDLE]"]').forEach(link => {
         if (CONFIG.instagramHandle !== '[INSTAGRAM_HANDLE]') {
             link.href = `https://instagram.com/${CONFIG.instagramHandle}`;
         }
     });
 
-    // WhatsApp
     document.querySelectorAll('a[href*="wa.me/[WHATSAPP_NUMBER]"]').forEach(link => {
         if (CONFIG.whatsappNumber !== '[WHATSAPP_NUMBER]') {
             link.href = `https://wa.me/${CONFIG.whatsappNumber}`;
@@ -262,15 +283,12 @@ function updateConfigLinks() {
     });
 }
 
-// Lazy load images intersection observer
 if ('IntersectionObserver' in window) {
     const lazyImages = document.querySelectorAll('img[loading="lazy"]');
     const imageObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const img = entry.target;
-                // Image loading is handled by browser with loading="lazy"
-                observer.unobserve(img);
+                observer.unobserve(entry.target);
             }
         });
     });
